@@ -1,0 +1,16 @@
+{
+  "body": {
+    "name": "nimath",
+    "class": "11-B",
+    "admissionNumber": "22223",
+    "address": "dsdsdf",
+    "phone": "0123444"
+  },
+  "assigned": {
+    "name": "nimath",
+    "className": "11-B",
+    "admissionNumber": "22223",
+    "address": "dsdsdf",
+    "phone": "0123444"
+  }
+}
