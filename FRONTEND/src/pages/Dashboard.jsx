@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { getBooks } from "../services/bookService.js";
 import { getTransactions } from "../services/circulationService.js";
-import { getMembers } from "../services/memberService.js";
+import { getStudents } from "../services/studentService.js";
 import { getNotices } from "../services/noticeService.js";
 import { Book, BookOpen, Users, AlertCircle, Calendar, Megaphone, Rocket, RefreshCw, Archive } from 'lucide-react';
 
@@ -11,7 +11,7 @@ export default function Dashboard() {
     const [metrics, setMetrics] = useState({
         totalBooks: 0,
         issuedBooks: 0,
-        newMembers: 0,
+        newStudents: 0,
         overdueBooks: 0
     });
     const [recentTx, setRecentTx] = useState([]);
@@ -20,16 +20,16 @@ export default function Dashboard() {
     useEffect(() => {
         const loadDashboardData = async () => {
             try {
-                const [booksRes, txRes, membersRes, noticesRes] = await Promise.all([
+                const [booksRes, txRes, studentsRes, noticesRes] = await Promise.all([
                     getBooks(),
                     getTransactions(),
-                    getMembers(),
+                    getStudents(),
                     getNotices()
                 ]);
 
                 const booksData = booksRes.data;
                 const txData = txRes.data;
-                const membersData = membersRes.data;
+                const studentsData = studentsRes.data;
                 const noticesData = noticesRes.data;
 
                 // Calculate Metrics
@@ -43,7 +43,7 @@ export default function Dashboard() {
                 setMetrics({
                     totalBooks: totalBooksCount,
                     issuedBooks: issuedCount,
-                    newMembers: membersData.length,
+                    newStudents: studentsData.length,
                     overdueBooks: overdueCount
                 });
 
@@ -125,8 +125,8 @@ export default function Dashboard() {
                         <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#10b981', backgroundColor: '#ecfdf5', padding: '0.25rem 0.5rem', borderRadius: '99px' }}>Active</span>
                     </div>
                     <div>
-                        <p style={{ color: '#64748b', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.25rem' }}>New Members</p>
-                        <h3 style={{ fontSize: '2rem', fontWeight: 'bold', color: '#0f172a' }}>{metrics.newMembers.toLocaleString()}</h3>
+                        <p style={{ color: '#64748b', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.25rem' }}>New Students</p>
+                        <h3 style={{ fontSize: '2rem', fontWeight: 'bold', color: '#0f172a' }}>{metrics.newStudents.toLocaleString()}</h3>
                     </div>
                 </div>
 

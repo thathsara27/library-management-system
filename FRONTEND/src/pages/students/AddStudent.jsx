@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { addMember } from "../../services/memberService.js";
+import { addStudent } from "../../services/studentService.js";
 import { useNavigate } from "react-router-dom";
 import { UserPlus, Save, ArrowLeft } from 'lucide-react';
 
@@ -23,7 +23,7 @@ export default function AddStudent() {
         e.preventDefault();
         setIsLoading(true);
         try {
-            await addMember(formData);
+            await addStudent(formData);
             alert("Student added successfully!");
             navigate("/students/view");
         } catch (err) {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { issueBook } from "../../services/circulationService.js";
-import { getMembers } from "../../services/memberService.js";
+import { getStudents } from "../../services/studentService.js";
 import { getBooks } from "../../services/bookService.js";
 import { useNavigate } from "react-router-dom";
 import { BookUp, Save, Clock } from 'lucide-react';
@@ -9,7 +9,7 @@ export default function IssueBook() {
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(false);
     
-    const [members, setMembers] = useState([]);
+    const [students, setStudents] = useState([]);
     const [books, setBooks] = useState([]);
 
     const today = new Date().toISOString().split('T')[0];
@@ -32,8 +32,8 @@ export default function IssueBook() {
         // Load real members and books for the dropdowns
         const loadData = async () => {
             try {
-                const memRes = await getMembers();
-                setMembers(memRes.data);
+                const stuRes = await getStudents();
+                setStudents(stuRes.data);
                 const bookRes = await getBooks();
                 setBooks(bookRes.data.filter(b => b.quantity > 0)); // Only show available books
             } catch (err) {
@@ -45,7 +45,7 @@ export default function IssueBook() {
 
     const handleStudentChange = (e) => {
         const id = e.target.value;
-        const student = members.find(m => m.admissionNumber === id);
+        const student = students.find(m => m.admissionNumber === id);
         setFormData({ 
             ...formData, 
             studentId: id, 
@@ -109,7 +109,7 @@ export default function IssueBook() {
                             style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: '0.5rem', border: '1px solid #cbd5e1', outline: 'none', backgroundColor: 'white' }}
                         >
                             <option value="" disabled>Search or Select a Student...</option>
-                            {members.map(m => (
+                            {students.map(m => (
                                 <option key={m._id} value={m.admissionNumber}>{m.name} ({m.admissionNumber})</option>
                             ))}
                         </select>

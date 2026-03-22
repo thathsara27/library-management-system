@@ -1,23 +1,23 @@
 const router = require("express").Router();
-let Member = require("../models/Member");
+let Student = require("../models/Student");
 
-// Get all members
+// Get all students
 router.route("/").get((req, res) => {
-    Member.find()
-        .then((members) => {
-            res.json(members);
+    Student.find()
+        .then((students) => {
+            res.json(students);
         })
         .catch((err) => {
             console.log(err);
-            res.status(500).json({ error: "Error fetching members" });
+            res.status(500).json({ error: "Error fetching students" });
         });
 });
 
-// Add a member
+// Add a student
 router.route("/").post((req, res) => {
     const { name, class: className, admissionNumber, address, phone } = req.body;
 
-    const newMember = new Member({
+    const newStudent = new Student({
         name,
         class: className,
         admissionNumber,
@@ -25,22 +25,22 @@ router.route("/").post((req, res) => {
         phone
     });
 
-    newMember.save()
+    newStudent.save()
         .then(() => {
-            res.json("Member Added");
+            res.json("Student Added");
         })
         .catch((err) => {
             console.log(err);
-            res.status(400).json({ error: "Error adding member", details: err.message });
+            res.status(400).json({ error: "Error adding student", details: err.message });
         });
 });
 
-// Update a member
+// Update a student
 router.route("/:id").put(async (req, res) => {
     let userId = req.params.id;
     const { name, class: className, admissionNumber, address, phone } = req.body;
 
-    const updateMember = {
+    const updateStudent = {
         name,
         class: className,
         admissionNumber,
@@ -48,7 +48,7 @@ router.route("/:id").put(async (req, res) => {
         phone
     };
 
-    await Member.findByIdAndUpdate(userId, updateMember)
+    await Student.findByIdAndUpdate(userId, updateStudent)
         .then(() => {
             res.status(200).send({ status: "User updated" });
         })
@@ -58,11 +58,11 @@ router.route("/:id").put(async (req, res) => {
         });
 });
 
-// Delete a member
+// Delete a student
 router.route("/:id").delete(async (req, res) => {
     let userId = req.params.id;
 
-    await Member.findByIdAndDelete(userId)
+    await Student.findByIdAndDelete(userId)
         .then(() => {
             res.status(200).send({ status: "User deleted" });
         })
@@ -72,12 +72,12 @@ router.route("/:id").delete(async (req, res) => {
         });
 });
 
-// Get one member
+// Get one student
 router.route("/:id").get(async (req, res) => {
     let userId = req.params.id;
-    const user = await Member.findById(userId)
-        .then((member) => {
-            res.status(200).send({ status: "User fetched", member });
+    const user = await Student.findById(userId)
+        .then((student) => {
+            res.status(200).send({ status: "User fetched", student });
         })
         .catch((err) => {
             console.log(err.message);

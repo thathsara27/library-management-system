@@ -11,8 +11,8 @@ const PORT = process.env.PORT || 8070;
 app.use(cors());
 app.use(bodyParser.json());
 
-const memberRouter = require("./routes/members.js");
-app.use("/api/members", memberRouter);
+const studentRouter = require("./routes/students.js");
+app.use("/api/students", studentRouter);
 
 const supplierRouter = require("./routes/suppliers.js");
 app.use("/api/suppliers", supplierRouter);

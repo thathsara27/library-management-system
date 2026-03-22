@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { getMember, updateMember } from "../../services/memberService.js";
+import { getStudent, updateStudent } from "../../services/studentService.js";
 import { useNavigate, useParams } from "react-router-dom";
 import { UserCog, Save, ArrowLeft } from 'lucide-react';
 
@@ -23,9 +23,9 @@ export default function EditStudent() {
 
     const loadStudent = async () => {
         try {
-            const res = await getMember(id);
-            if (res.data.member) {
-                setFormData(res.data.member);
+            const res = await getStudent(id);
+            if (res.data.student) {
+                setFormData(res.data.student);
             } else {
                 setFormData(res.data);
             }
@@ -45,7 +45,7 @@ export default function EditStudent() {
         e.preventDefault();
         setIsLoading(true);
         try {
-            await updateMember(id, formData);
+            await updateStudent(id, formData);
             alert("Student updated successfully!");
             navigate("/students/view");
         } catch (err) {

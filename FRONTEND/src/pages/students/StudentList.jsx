@@ -1,42 +1,42 @@
 import React, { useEffect, useState } from "react";
-import { getMembers, deleteMember } from "../../services/memberService.js";
+import { getStudents, deleteStudent } from "../../services/studentService.js";
 import { Link } from "react-router-dom";
 import { Search, Edit, Trash2, Users, TrendingUp, BookCheck, PlusCircle } from 'lucide-react';
 
 export default function StudentList() {
-    const [members, setMembers] = useState([]);
+    const [students, setStudents] = useState([]);
     const [search, setSearch] = useState("");
 
     useEffect(() => {
-        loadMembers();
+        loadStudents();
     }, []);
 
-    const loadMembers = async () => {
+    const loadStudents = async () => {
         try {
-            const res = await getMembers();
-            setMembers(res.data);
+            const res = await getStudents();
+            setStudents(res.data);
         } catch (error) {
-            console.error("Failed to load members:", error);
+            console.error("Failed to load students:", error);
         }
     };
 
     const handleDelete = async (id) => {
         if (window.confirm("Are you sure you want to delete this student?")) {
-            await deleteMember(id);
-            loadMembers();
+            await deleteStudent(id);
+            loadStudents();
         }
     };
 
-    const filteredMembers = members.filter((m) =>
+    const filteredStudents = students.filter((m) =>
         m.name.toLowerCase().includes(search.toLowerCase()) ||
         m.admissionNumber.toLowerCase().includes(search.toLowerCase())
     );
 
     // KPI Calculations
-    const totalStudents = members.length;
+    const totalStudents = students.length;
     
     // Calculate new this month perfectly using MongoDB ObjectID timestamp
-    const newThisMonth = members.filter(m => {
+    const newThisMonth = students.filter(m => {
         if (!m._id) return false;
         const timestamp = parseInt(m._id.substring(0, 8), 16) * 1000;
         const date = new Date(timestamp);
@@ -162,7 +162,7 @@ export default function StudentList() {
                             </tr>
                         </thead>
                         <tbody>
-                            {filteredMembers.map((m) => {
+                            {filteredStudents.map((m) => {
                                 const styleColors = getRandomColor(m.name);
                                 return (
                                 <tr key={m._id} style={{ borderTop: '1px solid #f3f4f6', transition: 'background-color 0.2s' }} className="table-row-hover">
@@ -202,7 +202,7 @@ export default function StudentList() {
                                     </td>
                                 </tr>
                             )})}
-                            {filteredMembers.length === 0 && (
+                            {filteredStudents.length === 0 && (
                                 <tr>
                                     <td colSpan="5" style={{ padding: '3rem', textAlign: 'center', color: 'var(--color-text-muted)' }}>
                                         No students found matching your filters.
