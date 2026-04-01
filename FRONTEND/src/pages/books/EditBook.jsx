@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { updateBook, getBook } from "../../services/bookService.js";
 import { useNavigate, useParams } from "react-router-dom";
 import { BookOpen, UploadCloud, Save } from 'lucide-react';
@@ -7,6 +7,7 @@ export default function EditBook() {
     const navigate = useNavigate();
     const { id } = useParams();
     const [isLoading, setIsLoading] = useState(false);
+    const fileInputRef = useRef(null);
 
     const [formData, setFormData] = useState({
         title: "",
@@ -35,6 +36,21 @@ export default function EditBook() {
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
+
+    const handleImageChange = (e) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            if (file.size > 5 * 1024 * 1024) {
+                alert("File size exceeds 5MB limit.");
+                return;
+            }
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setFormData({ ...formData, coverImage: reader.result });
+            };
+            reader.readAsDataURL(file);
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -183,10 +199,29 @@ export default function EditBook() {
                     {/* Cover Image Upload Area */}
                     <div>
                         <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#374151', marginBottom: '0.5rem' }}>Book Cover Image</label>
-                        <div style={{ border: '2px dashed #cbd5e1', borderRadius: '0.75rem', padding: '3rem 2rem', textAlign: 'center', backgroundColor: '#f8fafc', cursor: 'pointer' }}>
-                            <UploadCloud size={32} color="#94a3b8" style={{ margin: '0 auto 1rem' }} />
-                            <p style={{ color: '#475569', fontWeight: 600, marginBottom: '0.25rem' }}>Click to upload or drag and drop</p>
-                            <p style={{ color: '#94a3b8', fontSize: '0.75rem' }}>PNG, JPG or JPEG (max. 5MB)</p>
+                        <div 
+                            onClick={() => fileInputRef.current.click()}
+                            style={{ border: '2px dashed #cbd5e1', borderRadius: '0.75rem', padding: formData.coverImage ? '1rem' : '3rem 2rem', textAlign: 'center', backgroundColor: '#f8fafc', cursor: 'pointer' }}
+                        >
+                            {formData.coverImage ? (
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                    <img src={formData.coverImage} alt="Cover Preview" style={{ maxHeight: '200px', objectFit: 'contain', marginBottom: '1rem', borderRadius: '0.5rem' }} />
+                                    <p style={{ color: '#3b82f6', fontSize: '0.875rem', fontWeight: 600 }}>Click to change image</p>
+                                </div>
+                            ) : (
+                                <>
+                                    <UploadCloud size={32} color="#94a3b8" style={{ margin: '0 auto 1rem' }} />
+                                    <p style={{ color: '#475569', fontWeight: 600, marginBottom: '0.25rem' }}>Click to upload</p>
+                                    <p style={{ color: '#94a3b8', fontSize: '0.75rem' }}>PNG, JPG or JPEG (max. 5MB)</p>
+                                </>
+                            )}
+                            <input 
+                                type="file"
+                                accept="image/png, image/jpeg, image/jpg"
+                                ref={fileInputRef}
+                                onChange={handleImageChange}
+                                style={{ display: 'none' }}
+                            />
                         </div>
                     </div>
 

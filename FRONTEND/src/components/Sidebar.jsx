@@ -1,7 +1,7 @@
 import React, { useContext } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext.jsx';
-import { LayoutDashboard, Users, BookOpen, Repeat, Settings, BarChart2, Briefcase, Megaphone, LogOut } from 'lucide-react';
+import { LayoutDashboard, Users, BookText, BookOpen, Repeat, Settings, BarChart2, Briefcase, Megaphone, LogOut } from 'lucide-react';
 
 export default function Sidebar() {
     const { user, logout } = useContext(AuthContext);
@@ -35,9 +35,9 @@ export default function Sidebar() {
         <aside style={{ backgroundColor: 'var(--color-bg-sidebar)', width: '250px', color: 'white', display: 'flex', flexDirection: 'column', height: '100vh', padding: '1.5rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '3rem' }}>
                 <div style={{ width: '32px', height: '32px', backgroundColor: 'var(--color-primary)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <BookOpen size={20} color="white" />
+                    <BookText size={20} color="white" />
                 </div>
-                <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>LibManage Pro</h2>
+                <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>BookFlow</h2>
             </div>
 
             <nav style={{ flex: 1, overflowY: 'auto' }}>

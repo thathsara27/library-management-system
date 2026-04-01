@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { getBooks } from "../../services/bookService.js";
+import html2pdf from "html2pdf.js";
 import { getTransactions } from "../../services/circulationService.js";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { Download, Calendar as CalendarIcon, MoreHorizontal, Book } from 'lucide-react';
@@ -12,6 +13,7 @@ export default function Analytics() {
     const [topBooks, setTopBooks] = useState([]);
     const [totalBooksCount, setTotalBooksCount] = useState(0);
     const [totalBorrows, setTotalBorrows] = useState(0);
+    const reportRef = useRef(null);
 
     const COLORS = ['#14b8a6', '#94a3b8', '#e2e8f0', '#f59e0b', '#3b82f6'];
 
@@ -108,12 +110,25 @@ export default function Analytics() {
 
     const heatmap = generateHeatmap();
 
+    const handleExportPDF = () => {
+        const element = reportRef.current;
+        const opt = {
+            margin:       0.3,
+            filename:     'library_analytics_report.pdf',
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2, useCORS: true, logging: false },
+            jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+        };
+        
+        html2pdf().set(opt).from(element).save();
+    };
+
     if (isLoading) {
         return <div style={{ padding: '3rem', textAlign: 'center', color: '#6b7280' }}>Crunching real-time analytical data...</div>;
     }
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+        <div ref={reportRef} style={{ display: 'flex', flexDirection: 'column', gap: '2rem', padding: '1rem', backgroundColor: '#f8fafc', minHeight: '100vh', borderRadius: '1rem' }}>
             
             {/* Header Area */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'white', padding: '1.5rem 2rem', borderRadius: '1rem', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
@@ -121,11 +136,11 @@ export default function Analytics() {
                     <h2 style={{ fontSize: '1.75rem', fontWeight: 'bold', color: '#0f172a' }}>Analytics & Reports</h2>
                     <p style={{ color: '#64748b', fontSize: '0.875rem', marginTop: '0.25rem' }}>Real-time insights into library performance and borrowing trends</p>
                 </div>
-                <div style={{ display: 'flex', gap: '1rem' }}>
+                <div data-html2canvas-ignore="true" style={{ display: 'flex', gap: '1rem' }}>
                     <button style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1rem', borderRadius: '0.5rem', backgroundColor: '#f8fafc', color: '#475569', border: '1px solid #e2e8f0', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer' }}>
                         <CalendarIcon size={16} /> All Time <span style={{fontSize:'0.6rem'}}>▼</span>
                     </button>
-                    <button style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1.25rem', borderRadius: '0.5rem', backgroundColor: '#14b8a6', color: 'white', border: 'none', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 6px -1px rgba(20, 184, 166, 0.3)' }}>
+                    <button onClick={handleExportPDF} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1.25rem', borderRadius: '0.5rem', backgroundColor: '#14b8a6', color: 'white', border: 'none', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 6px -1px rgba(20, 184, 166, 0.3)' }}>
                         <Download size={16} /> Export Report
                     </button>
                 </div>
