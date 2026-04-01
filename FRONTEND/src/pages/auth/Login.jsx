@@ -41,7 +41,7 @@ export default function Login() {
             <div style={{ flex: '0 0 45%', background: 'linear-gradient(135deg, #0f172a 0%, #064e3b 100%)', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '4rem', color: 'white', position: 'relative', overflow: 'hidden' }}>
                 <div style={{ position: 'relative', zIndex: 10 }}>
                     <h1 style={{ fontSize: '3rem', fontWeight: 'bold', marginBottom: '1rem', lineHeight: 1.2 }}>Manage your library with precision.</h1>
-                    <p style={{ fontSize: '1.125rem', color: '#94a3b8', maxWidth: '400px', lineHeight: 1.6 }}>LibManage Pro provides powerful tools for modern librarians to streamline operations, engage members, and organize vast collections.</p>
+                    <p style={{ fontSize: '1.125rem', color: '#94a3b8', maxWidth: '400px', lineHeight: 1.6 }}>BookFlow provides powerful tools for modern librarians to streamline operations, engage members, and organize vast collections.</p>
                 </div>
                 {/* Decorative blob */}
                 <div style={{ position: 'absolute', bottom: '-10%', right: '-10%', width: '500px', height: '500px', background: 'radial-gradient(circle, rgba(20,184,166,0.15) 0%, rgba(15,23,42,0) 70%)', borderRadius: '50%' }}></div>
@@ -71,7 +71,7 @@ export default function Login() {
                                 <input 
                                     type="email"
                                     name="email"
-                                    placeholder="admin@libromanage.com"
+                                    placeholder="admin@bookflow.com"
                                     value={formData.email}
                                     onChange={handleChange}
                                     required

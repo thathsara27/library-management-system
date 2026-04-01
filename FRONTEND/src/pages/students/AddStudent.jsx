@@ -21,6 +21,10 @@ export default function AddStudent() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+           if (!/^07\d{8}$/.test(formData.phone)) {
+        alert("Invalid phone number (must be 10 digits starting with 07)");
+        return;
+    }
         setIsLoading(true);
         try {
             await addStudent(formData);

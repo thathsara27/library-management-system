@@ -107,8 +107,12 @@ export default function BookList() {
                                 <tr key={b._id} style={{ borderTop: '1px solid #f3f4f6', transition: 'background-color 0.2s' }} className="table-row-hover">
                                     <td style={{ padding: '1rem 1.5rem' }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                            <div style={{ width: '48px', height: '64px', borderRadius: '4px', backgroundColor: '#e0e7ff', color: '#4f46e5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                <BookOpen size={24} />
+                                            <div style={{ width: '48px', height: '64px', borderRadius: '4px', backgroundColor: '#e0e7ff', color: '#4f46e5', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                                                {b.coverImage ? (
+                                                    <img src={b.coverImage} alt={b.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                ) : (
+                                                    <BookOpen size={24} />
+                                                )}
                                             </div>
                                             <div>
                                                 <p style={{ fontWeight: 600, color: '#111827', fontSize: '1rem', marginBottom: '0.25rem' }}>{b.title}</p>

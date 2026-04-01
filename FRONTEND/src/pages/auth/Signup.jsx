@@ -113,7 +113,7 @@ export default function Signup() {
                             <div style={{ position: 'relative' }}>
                                 <Mail size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
                                 <input 
-                                    type="email" name="email" placeholder="staff@libromanage.com" value={formData.email} onChange={handleChange} required
+                                    type="email" name="email" placeholder="staff@bookflow.com" value={formData.email} onChange={handleChange} required
                                     style={{ width: '100%', padding: '0.75rem 1rem 0.75rem 2.75rem', borderRadius: '0.75rem', border: '1px solid #e2e8f0', outline: 'none', backgroundColor: '#f8fafc', fontSize: '0.875rem' }}
                                 />
                             </div>
@@ -140,7 +140,7 @@ export default function Signup() {
                         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', marginTop: '0.5rem' }}>
                             <input type="checkbox" id="terms" required style={{ width: '16px', height: '16px', borderRadius: '4px', border: '1px solid #cbd5e1', marginTop: '0.125rem' }} />
                             <label htmlFor="terms" style={{ fontSize: '0.75rem', color: '#64748b', lineHeight: 1.5 }}>
-                                I agree to the <span style={{ color: '#06b6d4' }}>Terms of Service</span> and <span style={{ color: '#06b6d4' }}>Privacy Policy</span> of LibroManage.
+                                I agree to the <span style={{ color: '#06b6d4' }}>Terms of Service</span> and <span style={{ color: '#06b6d4' }}>Privacy Policy</span> of BookFlow.
                             </label>
                         </div>
 
