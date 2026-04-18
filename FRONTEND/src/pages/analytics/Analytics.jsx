@@ -1,9 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
 import { getBooks } from "../../services/bookService.js";
+import { getStudents } from "../../services/studentService.js";
+import { getSuppliers } from "../../services/supplierService.js";
+import { getNotices } from "../../services/noticeService.js";
 import html2pdf from "html2pdf.js";
 import { getTransactions } from "../../services/circulationService.js";
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Download, Calendar as CalendarIcon, MoreHorizontal, Book } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, CartesianGrid, Legend } from 'recharts';
+import { Download, Calendar as CalendarIcon, MoreHorizontal, Book, Users, Truck, MessageSquare, Repeat } from 'lucide-react';
 
 export default function Analytics() {
     const [isLoading, setIsLoading] = useState(true);
@@ -13,6 +16,9 @@ export default function Analytics() {
     const [topBooks, setTopBooks] = useState([]);
     const [totalBooksCount, setTotalBooksCount] = useState(0);
     const [totalBorrows, setTotalBorrows] = useState(0);
+    const [totalStudents, setTotalStudents] = useState(0);
+    const [totalSuppliers, setTotalSuppliers] = useState(0);
+    const [totalNotices, setTotalNotices] = useState(0);
     const reportRef = useRef(null);
 
     const COLORS = ['#14b8a6', '#94a3b8', '#e2e8f0', '#f59e0b', '#3b82f6'];
@@ -20,9 +26,19 @@ export default function Analytics() {
     useEffect(() => {
         const fetchAnalytics = async () => {
             try {
-                const [booksRes, txRes] = await Promise.all([getBooks(), getTransactions()]);
+                const [booksRes, txRes, stuRes, supRes, notRes] = await Promise.all([
+                    getBooks(), 
+                    getTransactions(),
+                    getStudents(),
+                    getSuppliers(),
+                    getNotices()
+                ]);
                 const books = booksRes.data;
                 const transactions = txRes.data;
+                
+                setTotalStudents(stuRes.data.length || 0);
+                setTotalSuppliers(supRes.data.length || 0);
+                setTotalNotices(notRes.data.length || 0);
 
                 // 1. Calculate Monthly Borrowing Trends
                 const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
@@ -117,7 +133,7 @@ export default function Analytics() {
             filename:     'library_analytics_report.pdf',
             image:        { type: 'jpeg', quality: 0.98 },
             html2canvas:  { scale: 2, useCORS: true, logging: false },
-            jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+            jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' }
         };
         
         html2pdf().set(opt).from(element).save();
@@ -127,9 +143,125 @@ export default function Analytics() {
         return <div style={{ padding: '3rem', textAlign: 'center', color: '#6b7280' }}>Crunching real-time analytical data...</div>;
     }
 
+    const systemData = [
+        { name: 'Books', count: totalBooksCount },
+        { name: 'Transactions', count: totalBorrows },
+        { name: 'Members', count: totalStudents },
+        { name: 'Suppliers', count: totalSuppliers },
+        { name: 'Notices', count: totalNotices }
+    ];
+
     return (
-        <div ref={reportRef} style={{ display: 'flex', flexDirection: 'column', gap: '2rem', padding: '1rem', backgroundColor: '#f8fafc', minHeight: '100vh', borderRadius: '1rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', padding: '1rem', backgroundColor: '#f8fafc', minHeight: '100vh', borderRadius: '1rem' }}>
             
+            {/* Hidden Report Template */}
+            <div style={{ position: 'absolute', top: 0, left: 0, opacity: 0, pointerEvents: 'none', zIndex: -9999, width: '1100px', backgroundColor: '#f8fafc' }}>
+                <div ref={reportRef} style={{ padding: '2rem', backgroundColor: '#f8fafc', color: 'black', fontFamily: 'sans-serif' }}>
+                    
+                    {/* Header Strip */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid #0f172a', paddingBottom: '1rem', marginBottom: '1.5rem', backgroundColor: 'white', padding: '1.5rem', borderRadius: '1rem', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+                        <div>
+                            <h1 style={{ margin: 0, fontSize: '24px', color: '#0f172a', fontWeight: 'bold' }}>Library Management System</h1>
+                            <h2 style={{ margin: '0.25rem 0 0 0', fontSize: '18px', color: '#475569' }}>System Analytics Report</h2>
+                        </div>
+                        <div style={{ textAlign: 'right' }}>
+                            <p style={{ margin: 0, fontSize: '12px', color: '#64748b', fontWeight: 600 }}>GENERATED ON</p>
+                            <p style={{ margin: '0.25rem 0 0 0', fontSize: '14px', color: '#0f172a', fontWeight: 'bold' }}>{new Date().toLocaleDateString()}</p>
+                        </div>
+                    </div>
+
+                    {/* KPI Dashboard Strip */}
+                    <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
+                        <div style={{ flex: 1, backgroundColor: 'white', padding: '1rem', borderRadius: '0.75rem', borderLeft: '4px solid #14b8a6', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+                            <p style={{ margin: 0, fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Total Books</p>
+                            <h3 style={{ margin: '0.5rem 0 0 0', fontSize: '24px', color: '#0f172a' }}>{totalBooksCount}</h3>
+                        </div>
+                        <div style={{ flex: 1, backgroundColor: 'white', padding: '1rem', borderRadius: '0.75rem', borderLeft: '4px solid #3b82f6', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+                            <p style={{ margin: 0, fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Transactions</p>
+                            <h3 style={{ margin: '0.5rem 0 0 0', fontSize: '24px', color: '#0f172a' }}>{totalBorrows}</h3>
+                        </div>
+                        <div style={{ flex: 1, backgroundColor: 'white', padding: '1rem', borderRadius: '0.75rem', borderLeft: '4px solid #f97316', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+                            <p style={{ margin: 0, fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Members</p>
+                            <h3 style={{ margin: '0.5rem 0 0 0', fontSize: '24px', color: '#0f172a' }}>{totalStudents}</h3>
+                        </div>
+                        <div style={{ flex: 1, backgroundColor: 'white', padding: '1rem', borderRadius: '0.75rem', borderLeft: '4px solid #d946ef', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+                            <p style={{ margin: 0, fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Suppliers</p>
+                            <h3 style={{ margin: '0.5rem 0 0 0', fontSize: '24px', color: '#0f172a' }}>{totalSuppliers}</h3>
+                        </div>
+                    </div>
+
+                    {/* Charts Row */}
+                    <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', height: '280px' }}>
+                        
+                        {/* Line Chart Config */}
+                        <div style={{ flex: 2, backgroundColor: 'white', padding: '1rem', borderRadius: '1rem', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', display: 'flex', flexDirection: 'column' }}>
+                            <h3 style={{ margin: '0 0 1rem 0', fontSize: '14px', color: '#0f172a' }}>Monthly Borrowing Trends ({new Date().getFullYear()})</h3>
+                            <div style={{ flex: 1, width: '100%' }}>
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <LineChart data={monthlyData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#64748b', fontWeight: 600}} dy={10} />
+                                        <YAxis tick={{fontSize: 10, fill: '#64748b'}} axisLine={false} tickLine={false} />
+                                        <Line isAnimationActive={false} type="monotone" dataKey="borrows" stroke="#14b8a6" strokeWidth={3} dot={{r: 3, fill: '#14b8a6'}} activeDot={{ r: 5 }} />
+                                    </LineChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+
+                        {/* Donut Chart Config */}
+                        <div style={{ flex: 1.2, backgroundColor: 'white', padding: '1rem', borderRadius: '1rem', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', display: 'flex', flexDirection: 'column' }}>
+                            <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '14px', color: '#0f172a' }}>Distribution by Category</h3>
+                            <div style={{ position: 'relative', height: '140px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                        <Pie isAnimationActive={false} data={categoryData} cx="50%" cy="50%" innerRadius={40} outerRadius={60} paddingAngle={2} dataKey="value" stroke="none">
+                                            {categoryData.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={entry.color} />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                                <div style={{ position: 'absolute', textAlign: 'center' }}>
+                                    <p style={{ margin: 0, fontSize: '18px', fontWeight: 'bold' }}>{totalBooksCount}</p>
+                                    <p style={{ margin: 0, fontSize: '9px', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', marginTop: '2px' }}>Books</p>
+                                </div>
+                            </div>
+                            <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                                {categoryData.map(cat => (
+                                    <div key={cat.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#64748b', fontWeight: 500 }}>
+                                            <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: cat.color }}></span>
+                                            {cat.name}
+                                        </div>
+                                        <span style={{ fontWeight: 600, color: '#0f172a' }}>{cat.percent}%</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style={{ backgroundColor: 'white', borderRadius: '1rem', padding: '1rem', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+                    <h3 style={{ margin: '0 0 1rem 0', fontSize: '14px', color: '#0f172a' }}>Overview Data Totals</h3>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                        <thead>
+                            <tr style={{ backgroundColor: '#f1f5f9', borderBottom: '2px solid #cbd5e1' }}>
+                                <th style={{ padding: '8px', textAlign: 'left' }}>Data Category</th>
+                                <th style={{ padding: '8px', textAlign: 'right' }}>Total Count</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {systemData.map((d, i) => (
+                                <tr key={i} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                                    <td style={{ padding: '8px', fontWeight: 600 }}>{d.name}</td>
+                                    <td style={{ padding: '8px', textAlign: 'right' }}>{d.count.toLocaleString()}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                    </div>
+                </div>
+            </div>
+
             {/* Header Area */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'white', padding: '1.5rem 2rem', borderRadius: '1rem', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
                 <div>
@@ -143,6 +275,55 @@ export default function Analytics() {
                     <button onClick={handleExportPDF} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1.25rem', borderRadius: '0.5rem', backgroundColor: '#14b8a6', color: 'white', border: 'none', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 6px -1px rgba(20, 184, 166, 0.3)' }}>
                         <Download size={16} /> Export Report
                     </button>
+                </div>
+            </div>
+
+            {/* Overall System Summary KPI Strip */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '1rem' }}>
+                <div style={{ backgroundColor: 'white', padding: '1.25rem', borderRadius: '1rem', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <div style={{ backgroundColor: '#f0fdfa', padding: '0.75rem', borderRadius: '0.75rem', color: '#14b8a6' }}>
+                        <Book size={24} />
+                    </div>
+                    <div>
+                        <p style={{ color: '#64748b', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Books</p>
+                        <h3 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#0f172a', lineHeight: 1 }}>{totalBooksCount.toLocaleString()}</h3>
+                    </div>
+                </div>
+                <div style={{ backgroundColor: 'white', padding: '1.25rem', borderRadius: '1rem', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <div style={{ backgroundColor: '#eff6ff', padding: '0.75rem', borderRadius: '0.75rem', color: '#3b82f6' }}>
+                        <Repeat size={24} />
+                    </div>
+                    <div>
+                        <p style={{ color: '#64748b', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Transactions</p>
+                        <h3 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#0f172a', lineHeight: 1 }}>{totalBorrows.toLocaleString()}</h3>
+                    </div>
+                </div>
+                <div style={{ backgroundColor: 'white', padding: '1.25rem', borderRadius: '1rem', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <div style={{ backgroundColor: '#fff7ed', padding: '0.75rem', borderRadius: '0.75rem', color: '#f97316' }}>
+                        <Users size={24} />
+                    </div>
+                    <div>
+                        <p style={{ color: '#64748b', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Members</p>
+                        <h3 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#0f172a', lineHeight: 1 }}>{totalStudents.toLocaleString()}</h3>
+                    </div>
+                </div>
+                <div style={{ backgroundColor: 'white', padding: '1.25rem', borderRadius: '1rem', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <div style={{ backgroundColor: '#fdf4ff', padding: '0.75rem', borderRadius: '0.75rem', color: '#d946ef' }}>
+                        <Truck size={24} />
+                    </div>
+                    <div>
+                        <p style={{ color: '#64748b', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Suppliers</p>
+                        <h3 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#0f172a', lineHeight: 1 }}>{totalSuppliers.toLocaleString()}</h3>
+                    </div>
+                </div>
+                <div style={{ backgroundColor: 'white', padding: '1.25rem', borderRadius: '1rem', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <div style={{ backgroundColor: '#fef2f2', padding: '0.75rem', borderRadius: '0.75rem', color: '#ef4444' }}>
+                        <MessageSquare size={24} />
+                    </div>
+                    <div>
+                        <p style={{ color: '#64748b', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Live Notices</p>
+                        <h3 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#0f172a', lineHeight: 1 }}>{totalNotices.toLocaleString()}</h3>
+                    </div>
                 </div>
             </div>
 

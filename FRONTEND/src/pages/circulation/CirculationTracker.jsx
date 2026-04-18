@@ -1,12 +1,15 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { getTransactions, returnBook, deleteTransaction } from "../../services/circulationService.js";
 import { Link } from "react-router-dom";
-import { Search, PlusCircle, CheckCircle, AlertCircle, Clock, Trash2 } from 'lucide-react';
+import { Search, PlusCircle, CheckCircle, AlertCircle, Clock, Trash2, Download } from 'lucide-react';
+import html2pdf from "html2pdf.js";
+import { LineChart, Line, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts';
 
 export default function CirculationTracker() {
     const [transactions, setTransactions] = useState([]);
     const [search, setSearch] = useState("");
     const [filter, setFilter] = useState("All"); // All, Overdue, Returned
+    const reportRef = useRef(null);
 
     useEffect(() => {
         loadTransactions();
@@ -44,6 +47,18 @@ export default function CirculationTracker() {
         }
     };
 
+    const handleExportPDF = () => {
+        const element = reportRef.current;
+        const opt = {
+            margin:       0.3,
+            filename:     'circulation_report.pdf',
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2, useCORS: true, logging: false },
+            jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' }
+        };
+        html2pdf().set(opt).from(element).save();
+    };
+
     const getInitials = (name) => {
         if (!name) return "ST";
         return name.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase();
@@ -77,6 +92,32 @@ export default function CirculationTracker() {
         return matchesSearch && matchesFilter;
     });
 
+    const statusCounts = { 'On Time': 0, 'Due Soon': 0, 'Overdue': 0, 'Returned': 0 };
+    transactions.forEach(tx => {
+        const s = deriveStatus(tx);
+        statusCounts[s] = (statusCounts[s] || 0) + 1;
+    });
+    
+    const statusPieData = Object.keys(statusCounts).map((s) => ({
+        name: s,
+        value: statusCounts[s],
+        percent: transactions.length > 0 ? Math.round((statusCounts[s] / transactions.length) * 100) : 0,
+        color: s === "Returned" ? "#64748b" : s === "Overdue" ? "#ef4444" : s === "Due Soon" ? "#f59e0b" : "#10b981"
+    })).sort((a,b) => b.value - a.value).slice(0, 5);
+
+    const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+    const currentYear = new Date().getFullYear();
+    const monthlyTransactions = Array(12).fill(0).map((_, i) => ({ name: months[i], Transactions: 0 }));
+
+    transactions.forEach(tx => {
+        if (tx.issueDate) {
+            const date = new Date(tx.issueDate);
+            if (date.getFullYear() === currentYear) {
+                monthlyTransactions[date.getMonth()].Transactions += 1;
+            }
+        }
+    });
+
     const StatusBadge = ({ status }) => {
         switch(status) {
             case "Overdue":
@@ -94,6 +135,119 @@ export default function CirculationTracker() {
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
             
+            {/* Hidden Report Template */}
+            <div style={{ position: 'absolute', top: 0, left: 0, opacity: 0, pointerEvents: 'none', zIndex: -9999, width: '1100px', backgroundColor: '#f8fafc' }}>
+                <div ref={reportRef} style={{ padding: '2rem', backgroundColor: '#f8fafc', color: 'black', fontFamily: 'sans-serif' }}>
+                    
+                    {/* Header Strip */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid #3b82f6', paddingBottom: '1rem', marginBottom: '1.5rem', backgroundColor: 'white', padding: '1.5rem', borderRadius: '1rem', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+                        <div>
+                            <h1 style={{ margin: 0, fontSize: '24px', color: '#0f172a', fontWeight: 'bold' }}>Library Management System</h1>
+                            <h2 style={{ margin: '0.25rem 0 0 0', fontSize: '18px', color: '#475569' }}>Circulation & Lending Report</h2>
+                        </div>
+                        <div style={{ textAlign: 'right' }}>
+                            <p style={{ margin: 0, fontSize: '12px', color: '#64748b', fontWeight: 600 }}>GENERATED ON</p>
+                            <p style={{ margin: '0.25rem 0 0 0', fontSize: '14px', color: '#0f172a', fontWeight: 'bold' }}>{new Date().toLocaleDateString()}</p>
+                        </div>
+                    </div>
+
+                    {/* KPI Dashboard Strip */}
+                    <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
+                        <div style={{ flex: 1, backgroundColor: 'white', padding: '1rem', borderRadius: '0.75rem', borderLeft: '4px solid #3b82f6', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+                            <p style={{ margin: 0, fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Total Checked Out</p>
+                            <h3 style={{ margin: '0.5rem 0 0 0', fontSize: '24px', color: '#0f172a' }}>{totalCheckedOut}</h3>
+                        </div>
+                        <div style={{ flex: 1, backgroundColor: 'white', padding: '1rem', borderRadius: '0.75rem', borderLeft: '4px solid #10b981', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+                            <p style={{ margin: 0, fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Pending Returns</p>
+                            <h3 style={{ margin: '0.5rem 0 0 0', fontSize: '24px', color: '#0f172a' }}>{pendingReturns}</h3>
+                        </div>
+                        <div style={{ flex: 1, backgroundColor: 'white', padding: '1rem', borderRadius: '0.75rem', borderLeft: '4px solid #ef4444', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+                            <p style={{ margin: 0, fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Overdue Books</p>
+                            <h3 style={{ margin: '0.5rem 0 0 0', fontSize: '24px', color: '#0f172a' }}>{overdueCount}</h3>
+                        </div>
+                    </div>
+
+                    {/* Charts Row */}
+                    <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', height: '280px' }}>
+                        
+                        {/* Line Chart Config */}
+                        <div style={{ flex: 2, backgroundColor: 'white', padding: '1rem', borderRadius: '1rem', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', display: 'flex', flexDirection: 'column' }}>
+                            <h3 style={{ margin: '0 0 1rem 0', fontSize: '14px', color: '#0f172a' }}>Monthly Transactions ({currentYear})</h3>
+                            <div style={{ flex: 1, width: '100%' }}>
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <LineChart data={monthlyTransactions} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#64748b', fontWeight: 600}} dy={10} />
+                                        <YAxis tick={{fontSize: 10, fill: '#64748b'}} axisLine={false} tickLine={false} />
+                                        <Line isAnimationActive={false} type="monotone" dataKey="Transactions" stroke="#3b82f6" strokeWidth={3} dot={{r: 3, fill: '#3b82f6'}} activeDot={{ r: 5 }} />
+                                    </LineChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+
+                        {/* Donut Chart Config */}
+                        <div style={{ flex: 1.2, backgroundColor: 'white', padding: '1rem', borderRadius: '1rem', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', display: 'flex', flexDirection: 'column' }}>
+                            <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '14px', color: '#0f172a' }}>Transaction Status</h3>
+                            <div style={{ position: 'relative', height: '140px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                        <Pie isAnimationActive={false} data={statusPieData} cx="50%" cy="50%" innerRadius={40} outerRadius={60} paddingAngle={2} dataKey="value" stroke="none">
+                                            {statusPieData.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={entry.color} />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                                <div style={{ position: 'absolute', textAlign: 'center' }}>
+                                    <p style={{ margin: 0, fontSize: '18px', fontWeight: 'bold' }}>{transactions.length}</p>
+                                    <p style={{ margin: 0, fontSize: '9px', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', marginTop: '2px' }}>Borrows</p>
+                                </div>
+                            </div>
+                            <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                                {statusPieData.map(cat => (
+                                    <div key={cat.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#64748b', fontWeight: 500 }}>
+                                            <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: cat.color }}></span>
+                                            {cat.name}
+                                        </div>
+                                        <span style={{ fontWeight: 600, color: '#0f172a' }}>{cat.percent}%</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style={{ backgroundColor: 'white', borderRadius: '1rem', padding: '1rem', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+                        <h3 style={{ margin: '0 0 1rem 0', fontSize: '14px', color: '#0f172a' }}>Recent Activity Logs</h3>
+
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                        <thead>
+                            <tr style={{ backgroundColor: '#f1f5f9', borderBottom: '2px solid #cbd5e1' }}>
+                                <th style={{ padding: '8px', textAlign: 'left' }}>#</th>
+                                <th style={{ padding: '8px', textAlign: 'left' }}>Student Name</th>
+                                <th style={{ padding: '8px', textAlign: 'left' }}>Book Title</th>
+                                <th style={{ padding: '8px', textAlign: 'left' }}>Issue Date</th>
+                                <th style={{ padding: '8px', textAlign: 'left' }}>Due Date</th>
+                                <th style={{ padding: '8px', textAlign: 'left' }}>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {transactions.map((tx, i) => (
+                                <tr key={tx._id} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                                    <td style={{ padding: '8px' }}>{i + 1}</td>
+                                    <td style={{ padding: '8px', fontWeight: 600 }}>{tx.studentName}</td>
+                                    <td style={{ padding: '8px' }}>{tx.bookTitle}</td>
+                                    <td style={{ padding: '8px' }}>{new Date(tx.issueDate).toLocaleDateString()}</td>
+                                    <td style={{ padding: '8px' }}>{new Date(tx.dueDate).toLocaleDateString()}</td>
+                                    <td style={{ padding: '8px' }}>{deriveStatus(tx)}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                    </div>
+                </div>
+            </div>
+
             {/* Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
@@ -101,7 +255,7 @@ export default function CirculationTracker() {
                     <p style={{ color: '#6b7280', marginTop: '0.25rem' }}>Real-time insight into library circulation and lending metrics.</p>
                 </div>
                 
-                <div style={{ display: 'flex', gap: '1rem' }}>
+                <div data-html2canvas-ignore="true" style={{ display: 'flex', gap: '1rem' }}>
                     <div style={{ position: 'relative', width: '300px' }}>
                         <Search size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }} />
                         <input
@@ -112,6 +266,9 @@ export default function CirculationTracker() {
                             style={{ width: '100%', padding: '0.65rem 1rem 0.65rem 2.5rem', borderRadius: '99px', border: '1px solid #e2e8f0', outline: 'none', backgroundColor: '#f8fafc', fontSize: '0.875rem' }}
                         />
                     </div>
+                    <button onClick={handleExportPDF} style={{ backgroundColor: '#f8fafc', color: '#475569', padding: '0.65rem 1.5rem', borderRadius: '99px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', border: '1px solid #e2e8f0' }}>
+                        <Download size={18} /> Export
+                    </button>
                     <Link to="/circulation/add" style={{ backgroundColor: '#3b82f6', color: 'white', padding: '0.65rem 1.5rem', borderRadius: '99px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none', boxShadow: '0 4px 6px -1px rgba(59, 130, 246, 0.3)' }}>
                         <PlusCircle size={18} /> Transaction
                     </Link>
@@ -182,7 +339,7 @@ export default function CirculationTracker() {
                                 <th style={{ padding: '1rem 0.5rem', color: '#94a3b8', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Due Date</th>
                                 <th style={{ padding: '1rem 0.5rem', color: '#94a3b8', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Fine</th>
                                 <th style={{ padding: '1rem 0.5rem', color: '#94a3b8', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Status</th>
-                                <th style={{ padding: '1rem 0.5rem', color: '#94a3b8', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'right' }}>Action</th>
+                                <th data-html2canvas-ignore="true" style={{ padding: '1rem 0.5rem', color: '#94a3b8', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'right' }}>Action</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -234,7 +391,7 @@ export default function CirculationTracker() {
                                         <StatusBadge status={statusName} />
                                     </td>
 
-                                    <td style={{ padding: '1rem 0.5rem', textAlign: 'right', display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', alignItems: 'center', height: '100%' }}>
+                                    <td data-html2canvas-ignore="true" style={{ padding: '1rem 0.5rem', textAlign: 'right', display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', alignItems: 'center', height: '100%' }}>
                                         <Link to={`/circulation/edit/${tx._id}`} style={{ padding: '0.4rem 0.75rem', color: '#6b7280', backgroundColor: '#f8fafc', borderRadius: '6px', border: '1px solid #e2e8f0', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600, textDecoration: 'none' }}>
                                             Edit
                                         </Link>
