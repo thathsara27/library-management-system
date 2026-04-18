@@ -19,6 +19,16 @@
   padding: 0;
 }
 
+html, body {
+  height: 100vh;
+  overflow: hidden;
+  width: 100vw;
+}
+
+#root {
+  height: 100%;
+}
+
 body {
   font-family: var(--font-sans);
   background-color: var(--color-bg-main);
@@ -49,7 +59,7 @@ button {
 /* Layout Helper */
 .layout-container {
   display: flex;
-  height: 100vh;
+  height: 100%;
   overflow: hidden;
 }
 

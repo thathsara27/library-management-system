@@ -1,12 +1,15 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { getSuppliers, deleteSupplier } from "../../services/supplierService.js";
 import { Link } from "react-router-dom";
 import { Search, Edit, Trash2, Filter, Download, Star, StarHalf, PlusCircle } from 'lucide-react';
+import html2pdf from "html2pdf.js";
+import { LineChart, Line, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts';
 
 export default function SupplierList() {
     const [suppliers, setSuppliers] = useState([]);
     const [search, setSearch] = useState("");
     const [activeCategory, setActiveCategory] = useState("All");
+    const reportRef = useRef(null);
 
     const categories = ["All", "Academic", "Fiction", "Journals", "Technology"];
 
@@ -29,6 +32,47 @@ export default function SupplierList() {
             loadSuppliers();
         }
     };
+
+    const handleExportPDF = () => {
+        const element = reportRef.current;
+        const opt = {
+            margin:       0.3,
+            filename:     'suppliers_report.pdf',
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2, useCORS: true, logging: false },
+            jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' }
+        };
+        html2pdf().set(opt).from(element).save();
+    };
+
+    const catCounts = {};
+    suppliers.forEach(s => {
+        const c = s.category || 'Uncategorized';
+        catCounts[c] = (catCounts[c] || 0) + 1;
+    });
+    
+    const COLORS = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#64748b'];
+    
+    const catPieData = Object.keys(catCounts).map((cat, i) => ({
+        name: cat,
+        value: catCounts[cat],
+        percent: suppliers.length > 0 ? Math.round((catCounts[cat] / suppliers.length) * 100) : 0,
+        color: COLORS[i % COLORS.length]
+    })).sort((a,b) => b.value - a.value).slice(0, 5);
+
+    const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+    const currentYear = new Date().getFullYear();
+    const monthlyAdditions = Array(12).fill(0).map((_, i) => ({ name: months[i], Suppliers: 0 }));
+
+    suppliers.forEach(s => {
+        if (s._id) {
+            const timestamp = parseInt(s._id.substring(0, 8), 16) * 1000;
+            const date = new Date(timestamp);
+            if (date.getFullYear() === currentYear) {
+                monthlyAdditions[date.getMonth()].Suppliers += 1;
+            }
+        }
+    });
 
     const filteredSuppliers = suppliers.filter((s) => {
         const matchesSearch = s.supplierName.toLowerCase().includes(search.toLowerCase()) || 
@@ -60,6 +104,118 @@ export default function SupplierList() {
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+            
+            {/* Hidden Report Template */}
+            <div style={{ position: 'absolute', top: 0, left: 0, opacity: 0, pointerEvents: 'none', zIndex: -9999, width: '1100px', backgroundColor: '#f8fafc' }}>
+                <div ref={reportRef} style={{ padding: '2rem', backgroundColor: '#f8fafc', color: 'black', fontFamily: 'sans-serif' }}>
+                    
+                    {/* Header Strip */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid #8b5cf6', paddingBottom: '1rem', marginBottom: '1.5rem', backgroundColor: 'white', padding: '1.5rem', borderRadius: '1rem', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+                        <div>
+                            <h1 style={{ margin: 0, fontSize: '24px', color: '#0f172a', fontWeight: 'bold' }}>Library Management System</h1>
+                            <h2 style={{ margin: '0.25rem 0 0 0', fontSize: '18px', color: '#475569' }}>Supplier Directory Report</h2>
+                        </div>
+                        <div style={{ textAlign: 'right' }}>
+                            <p style={{ margin: 0, fontSize: '12px', color: '#64748b', fontWeight: 600 }}>GENERATED ON</p>
+                            <p style={{ margin: '0.25rem 0 0 0', fontSize: '14px', color: '#0f172a', fontWeight: 'bold' }}>{new Date().toLocaleDateString()}</p>
+                        </div>
+                    </div>
+
+                    {/* KPI Dashboard Strip */}
+                    <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
+                        <div style={{ flex: 1, backgroundColor: 'white', padding: '1rem', borderRadius: '0.75rem', borderLeft: '4px solid #8b5cf6', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+                            <p style={{ margin: 0, fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Total Suppliers</p>
+                            <h3 style={{ margin: '0.5rem 0 0 0', fontSize: '24px', color: '#0f172a' }}>{suppliers.length}</h3>
+                        </div>
+                        <div style={{ flex: 1, backgroundColor: 'white', padding: '1rem', borderRadius: '0.75rem', borderLeft: '4px solid #3b82f6', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+                            <p style={{ margin: 0, fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Total Categories</p>
+                            <h3 style={{ margin: '0.5rem 0 0 0', fontSize: '24px', color: '#0f172a' }}>{Object.keys(catCounts).length}</h3>
+                        </div>
+                        <div style={{ flex: 1, backgroundColor: 'white', padding: '1rem', borderRadius: '0.75rem', borderLeft: '4px solid #10b981', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+                            <p style={{ margin: 0, fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>High Rated (5★)</p>
+                            <h3 style={{ margin: '0.5rem 0 0 0', fontSize: '24px', color: '#0f172a' }}>{suppliers.filter(s => s.rating === 5).length}</h3>
+                        </div>
+                    </div>
+
+                    {/* Charts Row */}
+                    <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', height: '280px' }}>
+                        
+                        {/* Line Chart Config */}
+                        <div style={{ flex: 2, backgroundColor: 'white', padding: '1rem', borderRadius: '1rem', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', display: 'flex', flexDirection: 'column' }}>
+                            <h3 style={{ margin: '0 0 1rem 0', fontSize: '14px', color: '#0f172a' }}>Supplier Onboarding Trends ({currentYear})</h3>
+                            <div style={{ flex: 1, width: '100%' }}>
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <LineChart data={monthlyAdditions} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#64748b', fontWeight: 600}} dy={10} />
+                                        <YAxis tick={{fontSize: 10, fill: '#64748b'}} axisLine={false} tickLine={false} />
+                                        <Line isAnimationActive={false} type="monotone" dataKey="Suppliers" stroke="#8b5cf6" strokeWidth={3} dot={{r: 3, fill: '#8b5cf6'}} activeDot={{ r: 5 }} />
+                                    </LineChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+
+                        {/* Donut Chart Config */}
+                        <div style={{ flex: 1.2, backgroundColor: 'white', padding: '1rem', borderRadius: '1rem', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', display: 'flex', flexDirection: 'column' }}>
+                            <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '14px', color: '#0f172a' }}>Category Distribution</h3>
+                            <div style={{ position: 'relative', height: '140px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                        <Pie isAnimationActive={false} data={catPieData} cx="50%" cy="50%" innerRadius={40} outerRadius={60} paddingAngle={2} dataKey="value" stroke="none">
+                                            {catPieData.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={entry.color} />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                                <div style={{ position: 'absolute', textAlign: 'center' }}>
+                                    <p style={{ margin: 0, fontSize: '18px', fontWeight: 'bold' }}>{suppliers.length}</p>
+                                    <p style={{ margin: 0, fontSize: '9px', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', marginTop: '2px' }}>Suppliers</p>
+                                </div>
+                            </div>
+                            <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                                {catPieData.map(cat => (
+                                    <div key={cat.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#64748b', fontWeight: 500 }}>
+                                            <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: cat.color }}></span>
+                                            {cat.name}
+                                        </div>
+                                        <span style={{ fontWeight: 600, color: '#0f172a' }}>{cat.percent}%</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style={{ backgroundColor: 'white', borderRadius: '1rem', padding: '1rem', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+                        <h3 style={{ margin: '0 0 1rem 0', fontSize: '14px', color: '#0f172a' }}>Supplier Directory Details</h3>
+
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                        <thead>
+                            <tr style={{ backgroundColor: '#f1f5f9', borderBottom: '2px solid #cbd5e1' }}>
+                                <th style={{ padding: '8px', textAlign: 'left' }}>#</th>
+                                <th style={{ padding: '8px', textAlign: 'left' }}>Supplier Name</th>
+                                <th style={{ padding: '8px', textAlign: 'left' }}>Category</th>
+                                <th style={{ padding: '8px', textAlign: 'left' }}>Contact Person</th>
+                                <th style={{ padding: '8px', textAlign: 'left' }}>Email/Phone</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {suppliers.map((s, i) => (
+                                <tr key={s._id} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                                    <td style={{ padding: '8px' }}>{i + 1}</td>
+                                    <td style={{ padding: '8px', fontWeight: 600 }}>{s.supplierName}</td>
+                                    <td style={{ padding: '8px' }}>{s.category}</td>
+                                    <td style={{ padding: '8px' }}>{s.contactPerson}</td>
+                                    <td style={{ padding: '8px' }}>{s.email}<br/>{s.phone}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                    </div>
+                </div>
+            </div>
+
             {/* Header Area */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
@@ -68,18 +224,35 @@ export default function SupplierList() {
                         Manage and monitor {suppliers.length} active book suppliers globally
                     </p>
                 </div>
-                <Link to="/suppliers/add" style={{
-                    backgroundColor: 'var(--color-primary)',
-                    color: 'white',
-                    padding: '0.75rem 1.5rem',
-                    borderRadius: '99px',
-                    fontWeight: 600,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem'
-                }}>
-                    <PlusCircle size={20} /> Add New Supplier
-                </Link>
+                <div data-html2canvas-ignore="true" style={{ display: 'flex', gap: '1rem' }}>
+                    <button onClick={handleExportPDF} style={{
+                        backgroundColor: '#f8fafc',
+                        color: '#475569',
+                        border: '1px solid #e2e8f0',
+                        padding: '0.75rem 1.5rem',
+                        borderRadius: '99px',
+                        fontWeight: 600,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        cursor: 'pointer'
+                    }}>
+                        <Download size={20} /> Export Report
+                    </button>
+                    <Link to="/suppliers/add" style={{
+                        backgroundColor: 'var(--color-primary)',
+                        color: 'white',
+                        padding: '0.75rem 1.5rem',
+                        borderRadius: '99px',
+                        fontWeight: 600,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        textDecoration: 'none'
+                    }}>
+                        <PlusCircle size={20} /> Add New Supplier
+                    </Link>
+                </div>
             </div>
 
             {/* Main Card */}
@@ -150,7 +323,7 @@ export default function SupplierList() {
                                 <th style={{ padding: '1rem 1.5rem', color: 'var(--color-text-muted)', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Email & Phone</th>
                                 <th style={{ padding: '1rem 1.5rem', color: 'var(--color-text-muted)', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Supplied Count</th>
                                 <th style={{ padding: '1rem 1.5rem', color: 'var(--color-text-muted)', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Rating</th>
-                                <th style={{ padding: '1rem 1.5rem', color: 'var(--color-text-muted)', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'right' }}>Actions</th>
+                                <th data-html2canvas-ignore="true" style={{ padding: '1rem 1.5rem', color: 'var(--color-text-muted)', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'right' }}>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -182,7 +355,7 @@ export default function SupplierList() {
                                     <td style={{ padding: '1rem 1.5rem' }}>
                                         {renderStars(s.rating || 5)}
                                     </td>
-                                    <td style={{ padding: '1rem 1.5rem', textAlign: 'right' }}>
+                                    <td data-html2canvas-ignore="true" style={{ padding: '1rem 1.5rem', textAlign: 'right' }}>
                                         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
                                             <button style={{ padding: '0.5rem', color: '#9ca3af', backgroundColor: 'transparent', borderRadius: '6px', border: 'none', cursor: 'pointer' }}>
                                                 <Filter size={18} />
