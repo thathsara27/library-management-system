@@ -36,9 +36,13 @@ const noticeSchema = new Schema({
     author: {
         type: String,
         default: 'Administrator'
+    },
+    coverImage: {
+        type: String // To store base64 image string
     }
 }, { timestamps: true });
 
 const Notice = mongoose.model("Notice", noticeSchema);
 
 module.exports = Notice;
+

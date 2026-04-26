@@ -1,6 +1,6 @@
 import React, { useState, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { loginStaff } from '../../services/authService.js';
+import { loginStaff, loginStudent } from '../../services/authService.js';
 import { AuthContext } from '../../context/AuthContext.jsx';
 import { Mail, Lock, Eye, ArrowRight } from 'lucide-react';
 
@@ -9,6 +9,7 @@ export default function Login() {
     const { login } = useContext(AuthContext);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
+    const [loginRole, setLoginRole] = useState('admin');
 
     const [formData, setFormData] = useState({
         email: '',
@@ -25,9 +26,22 @@ export default function Login() {
         setIsLoading(true);
 
         try {
-            const data = await loginStaff(formData.email, formData.password);
+            let data;
+            if (loginRole === 'admin') {
+                data = await loginStaff(formData.email, formData.password);
+            } else {
+                data = await loginStudent(formData.email, formData.password);
+            }
+            
             login(data.user);
-            navigate('/');
+            
+            // Redirect based on role explicitly returned from backend
+            if (data.user.role === 'Student' || data.user.role === 'student') {
+                navigate('/student/home');
+            } else {
+                navigate('/');
+            }
+            
         } catch (err) {
             setError(err.response?.data?.error || 'Failed to login. Please check your credentials.');
         } finally {
@@ -53,7 +67,25 @@ export default function Login() {
                     
                     <div style={{ marginBottom: '2.5rem' }}>
                         <h2 style={{ fontSize: '2rem', fontWeight: 'bold', color: '#0f172a', marginBottom: '0.5rem' }}>Welcome Back</h2>
-                        <p style={{ color: '#64748b', fontSize: '0.875rem' }}>Enter your credentials to access the admin dashboard.</p>
+                        <p style={{ color: '#64748b', fontSize: '0.875rem' }}>Enter your credentials to access your account.</p>
+                    </div>
+
+                    {/* Role Toggle */}
+                    <div style={{ display: 'flex', backgroundColor: '#f1f5f9', borderRadius: '0.75rem', padding: '0.35rem', marginBottom: '1.5rem' }}>
+                        <button 
+                            type="button"
+                            onClick={() => setLoginRole('student')}
+                            style={{ flex: 1, padding: '0.75rem', borderRadius: '0.5rem', border: 'none', fontWeight: 600, fontSize: '0.875rem', cursor: 'pointer', transition: 'all 0.2s', backgroundColor: loginRole === 'student' ? 'white' : 'transparent', color: loginRole === 'student' ? '#0f172a' : '#64748b', boxShadow: loginRole === 'student' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}
+                        >
+                            Student Portal
+                        </button>
+                        <button 
+                            type="button"
+                            onClick={() => setLoginRole('admin')}
+                            style={{ flex: 1, padding: '0.75rem', borderRadius: '0.5rem', border: 'none', fontWeight: 600, fontSize: '0.875rem', cursor: 'pointer', transition: 'all 0.2s', backgroundColor: loginRole === 'admin' ? 'white' : 'transparent', color: loginRole === 'admin' ? '#0f172a' : '#64748b', boxShadow: loginRole === 'admin' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}
+                        >
+                            Staff / Admin
+                        </button>
                     </div>
 
                     {error && (
@@ -116,9 +148,15 @@ export default function Login() {
                     </form>
 
                     <div style={{ marginTop: '2.5rem', textAlign: 'center' }}>
-                        <p style={{ fontSize: '0.875rem', color: '#64748b' }}>
-                            Don't have an account? <Link to="/signup" style={{ color: '#06b6d4', fontWeight: 600, textDecoration: 'none' }}>Sign Up</Link>
-                        </p>
+                        {loginRole === 'admin' ? (
+                            <p style={{ fontSize: '0.875rem', color: '#64748b' }}>
+                                Staff access only. Need an account? <Link to="/signup" style={{ color: '#06b6d4', fontWeight: 600, textDecoration: 'none' }}>Register Staff</Link>
+                            </p>
+                        ) : (
+                            <p style={{ fontSize: '0.875rem', color: '#64748b' }}>
+                                Student access only. No account? <Link to="/signup" style={{ color: '#06b6d4', fontWeight: 600, textDecoration: 'none' }}>Register Student</Link>
+                            </p>
+                        )}
                     </div>
 
                     <div style={{ display: 'flex', justifyContent: 'center', gap: '1.5rem', marginTop: '3rem', fontSize: '0.75rem', color: '#94a3b8' }}>

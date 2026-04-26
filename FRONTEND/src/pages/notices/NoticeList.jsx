@@ -312,6 +312,13 @@ export default function NoticeList() {
                                 </span>
                             </div>
 
+                            {/* Cover Image */}
+                            {notice.coverImage && (
+                                <div style={{ width: '100%', height: '150px', borderRadius: '0.75rem', overflow: 'hidden', marginTop: '0.5rem', marginBottom: '0.5rem', flexShrink: 0 }}>
+                                    <img src={notice.coverImage} alt="Cover" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                </div>
+                            )}
+
                             {/* Card Body */}
                             <div>
                                 <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '0.5rem', color: '#111827', lineHeight: 1.3 }}>

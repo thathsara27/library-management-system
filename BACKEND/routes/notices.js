@@ -3,7 +3,7 @@ let Notice = require("../models/Notice");
 
 // Create (Add new notice)
 router.route("/").post((req, res) => {
-    const { title, category, content, targetAudience, publishDate, publishTime, isPinned, status, author } = req.body;
+    const { title, category, content, targetAudience, publishDate, publishTime, isPinned, status, author, coverImage } = req.body;
 
     const newNotice = new Notice({
         title,
@@ -14,7 +14,8 @@ router.route("/").post((req, res) => {
         publishTime,
         isPinned,
         status,
-        author
+        author,
+        coverImage
     });
 
     newNotice.save()
@@ -42,7 +43,7 @@ router.route("/").get((req, res) => {
 // Update (Edit notice)
 router.route("/:id").put(async (req, res) => {
     let noticeId = req.params.id;
-    const { title, category, content, targetAudience, publishDate, publishTime, isPinned, status, author } = req.body;
+    const { title, category, content, targetAudience, publishDate, publishTime, isPinned, status, author, coverImage } = req.body;
 
     const updateNotice = {
         title,
@@ -53,7 +54,8 @@ router.route("/:id").put(async (req, res) => {
         publishTime,
         isPinned,
         status,
-        author
+        author,
+        coverImage
     };
 
     await Notice.findByIdAndUpdate(noticeId, updateNotice)
