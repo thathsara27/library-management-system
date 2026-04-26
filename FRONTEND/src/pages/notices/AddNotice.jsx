@@ -16,7 +16,8 @@ export default function AddNotice() {
         publishTime: "09:00",
         isPinned: false,
         status: "Published",
-        author: "Administrator"
+        author: "Administrator",
+        coverImage: ""
     });
     const [isLoading, setIsLoading] = useState(false);
 
@@ -34,6 +35,17 @@ export default function AddNotice() {
 
     const setCategory = (cat) => {
         setFormData({ ...formData, category: cat });
+    };
+
+    const handleImageUpload = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setFormData({ ...formData, coverImage: reader.result });
+            };
+            reader.readAsDataURL(file);
+        }
     };
 
     const handleSubmit = async (e, isDraft = false) => {
@@ -191,9 +203,26 @@ export default function AddNotice() {
                                 </div>
                             </div>
 
-                            <div style={{ border: '2px dashed #cbd5e1', borderRadius: '0.5rem', padding: '2rem', textAlign: 'center', cursor: 'pointer', backgroundColor: 'white' }}>
-                                <ImageIcon size={24} color="#94a3b8" style={{ margin: '0 auto 0.5rem' }} />
-                                <p style={{ fontSize: '0.875rem', color: '#64748b' }}>Upload Cover Image</p>
+                            <div style={{ position: 'relative', border: '2px dashed #cbd5e1', borderRadius: '0.5rem', padding: formData.coverImage ? '0' : '2rem', textAlign: 'center', cursor: 'pointer', backgroundColor: 'white', overflow: 'hidden' }}>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleImageUpload}
+                                    style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer', zIndex: 10 }}
+                                />
+                                {formData.coverImage ? (
+                                    <div style={{ position: 'relative', width: '100%', height: '120px' }}>
+                                        <img src={formData.coverImage} alt="Cover Preview" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                                        <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0, transition: 'opacity 0.2s', ':hover': { opacity: 1 } }}>
+                                            <p style={{ color: 'white', fontSize: '0.875rem', fontWeight: 600 }}>Change Image</p>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div>
+                                        <ImageIcon size={24} color="#94a3b8" style={{ margin: '0 auto 0.5rem' }} />
+                                        <p style={{ fontSize: '0.875rem', color: '#64748b' }}>Upload Cover Image</p>
+                                    </div>
+                                )}
                             </div>
 
                         </div>

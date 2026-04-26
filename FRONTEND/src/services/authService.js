@@ -20,6 +20,24 @@ export const loginStaff = async (email, password) => {
     return res.data;
 };
 
+export const registerStudent = async (data) => {
+    const res = await axios.post(`${API_URL}/student/register`, data);
+    if (res.data.token) {
+        localStorage.setItem("token", res.data.token);
+        localStorage.setItem("user", JSON.stringify(res.data.user));
+    }
+    return res.data;
+};
+
+export const loginStudent = async (email, password) => {
+    const res = await axios.post(`${API_URL}/student/login`, { email, password });
+    if (res.data.token) {
+        localStorage.setItem("token", res.data.token);
+        localStorage.setItem("user", JSON.stringify(res.data.user));
+    }
+    return res.data;
+};
+
 export const logoutStaff = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
