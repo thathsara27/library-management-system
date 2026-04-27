@@ -23,6 +23,13 @@ export default function AddSupplier() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        const phoneRegex = /^[0-9+\-\s()]+$/;
+        if (!phoneRegex.test(formData.phone)) {
+            alert("Invalid phone number format");
+            return;
+        }
+
         setIsLoading(true);
         try {
             await addSupplier(formData);
