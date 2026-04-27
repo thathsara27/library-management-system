@@ -222,7 +222,7 @@ export default function BookList() {
                         <Download size={20} /> Export Report
                     </button>
                     <Link to="/books/add" style={{
-                        backgroundColor: '#14b8a6',
+                        backgroundColor: '#0ea5e9',
                         color: 'white',
                         padding: '0.75rem 1.5rem',
                         borderRadius: '99px',
