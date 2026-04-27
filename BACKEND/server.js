@@ -30,6 +30,12 @@ app.use("/api/transactions", transactionRouter);
 const authRouter = require("./routes/auth.js");
 app.use("/api/auth", authRouter);
 
+const dashboardRouter = require("./routes/dashboard.js");
+app.use("/api/dashboard", dashboardRouter);
+
+const settingsRouter = require("./routes/settings.js");
+app.use("/api/settings", settingsRouter);
+
 const URL = process.env.MONGODB_URL;
 
 mongoose.connect(URL)

@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { getBooks } from "../services/bookService.js";
-import { getTransactions } from "../services/circulationService.js";
-import { getStudents } from "../services/studentService.js";
-import { getNotices } from "../services/noticeService.js";
+import { getDashboardSummary } from "../services/dashboardService.js";
 import { Book, BookOpen, Users, AlertCircle, Calendar, Megaphone, Rocket, RefreshCw, Archive } from 'lucide-react';
 
 export default function Dashboard() {
@@ -20,39 +17,12 @@ export default function Dashboard() {
     useEffect(() => {
         const loadDashboardData = async () => {
             try {
-                const [booksRes, txRes, studentsRes, noticesRes] = await Promise.all([
-                    getBooks(),
-                    getTransactions(),
-                    getStudents(),
-                    getNotices()
-                ]);
+                const res = await getDashboardSummary();
+                const data = res.data;
 
-                const booksData = booksRes.data;
-                const txData = txRes.data;
-                const studentsData = studentsRes.data;
-                const noticesData = noticesRes.data;
-
-                // Calculate Metrics
-                const totalBooksCount = booksData.reduce((acc, book) => acc + (book.quantity || 1), 0);
-                
-                const activeLoans = txData.filter(t => t.status === "Borrowed");
-                const issuedCount = activeLoans.length;
-
-                const overdueCount = activeLoans.filter(t => new Date(t.dueDate) < new Date()).length;
-
-                setMetrics({
-                    totalBooks: totalBooksCount,
-                    issuedBooks: issuedCount,
-                    newStudents: studentsData.length,
-                    overdueBooks: overdueCount
-                });
-
-                // Get Top 4 Recent Transactions
-                setRecentTx(txData.slice(0, 4));
-
-                // Get Top 3 Pinned/Recent Notices
-                const sortedNotices = [...noticesData].sort((a, b) => b.isPinned - a.isPinned);
-                setRecentNotices(sortedNotices.slice(0, 3));
+                setMetrics(data.metrics);
+                setRecentTx(data.recentTx);
+                setRecentNotices(data.recentNotices);
 
             } catch (error) {
                 console.error("Error loading dashboard data:", error);

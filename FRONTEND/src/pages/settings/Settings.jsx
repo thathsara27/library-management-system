@@ -1,11 +1,13 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { Clock, DollarSign, Save, RotateCcw, Shield, CheckCircle } from 'lucide-react';
 import { AuthContext } from "../../context/AuthContext.jsx";
 import { changePassword } from "../../services/authService.js";
+import { getSettings, updateSettings } from "../../services/settingService.js";
 
 export default function Settings() {
     const { user } = useContext(AuthContext);
-    const [isLoading, setIsLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
     const [activeTab, setActiveTab] = useState('Loan Rules');
     const [settings, setSettings] = useState({
         maxBooks: 5,
@@ -25,6 +27,22 @@ export default function Settings() {
         smsOverdue: false
     });
 
+    useEffect(() => {
+        const fetchSettings = async () => {
+            try {
+                const res = await getSettings();
+                if (res.data) {
+                    setSettings(res.data);
+                }
+            } catch (err) {
+                console.error("Failed to load settings:", err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchSettings();
+    }, []);
+
     const [pwdData, setPwdData] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
     const [pwdStatus, setPwdStatus] = useState({ loading: false, error: null, success: null });
 
@@ -36,16 +54,21 @@ export default function Settings() {
         }));
     };
 
-    const handleSave = () => {
+    const handleSave = async () => {
         if (activeTab === 'Account') {
             handlePasswordChange();
             return;
         }
-        setIsLoading(true);
-        setTimeout(() => {
-            setIsLoading(false);
+        setIsSaving(true);
+        try {
+            await updateSettings(settings);
             alert("Settings successfully saved and applied to globally active loans!");
-        }, 800);
+        } catch (err) {
+            console.error("Failed to save settings:", err);
+            alert("Error saving settings.");
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     const handlePasswordChange = async () => {
@@ -64,6 +87,10 @@ export default function Settings() {
     };
 
     const tabs = ['General', 'Fine Rates', 'Notifications', 'Loan Rules', 'Account'];
+
+    if (isLoading) {
+        return <div style={{ padding: '3rem', textAlign: 'center', color: '#64748b' }}>Loading settings...</div>;
+    }
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', paddingBottom: '5rem' }}>
@@ -375,8 +402,8 @@ export default function Settings() {
                     <button style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.5rem', backgroundColor: 'transparent', border: '1px solid #e2e8f0', borderRadius: '0.5rem', color: '#475569', fontWeight: 600, fontSize: '0.875rem', cursor: 'pointer' }}>
                         <RotateCcw size={18} /> Reset to Default
                     </button>
-                    <button onClick={handleSave} disabled={isLoading} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.75rem', backgroundColor: '#14b8a6', border: 'none', borderRadius: '0.5rem', color: 'white', fontWeight: 'bold', fontSize: '0.875rem', cursor: 'pointer', boxShadow: '0 4px 6px -1px rgba(20, 184, 166, 0.3)' }}>
-                        <Save size={18} /> {isLoading ? "Saving..." : "Save Changes"}
+                    <button onClick={handleSave} disabled={isSaving} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.75rem', backgroundColor: '#14b8a6', border: 'none', borderRadius: '0.5rem', color: 'white', fontWeight: 'bold', fontSize: '0.875rem', cursor: 'pointer', boxShadow: '0 4px 6px -1px rgba(20, 184, 166, 0.3)' }}>
+                        <Save size={18} /> {isSaving ? "Saving..." : "Save Changes"}
                     </button>
                 </div>
             </div>

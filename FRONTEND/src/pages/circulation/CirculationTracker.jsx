@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { getTransactions, returnBook, deleteTransaction } from "../../services/circulationService.js";
+import { getSettings } from "../../services/settingService.js";
 import { Link } from "react-router-dom";
 import { Search, PlusCircle, CheckCircle, AlertCircle, Clock, Trash2, Download } from 'lucide-react';
 import html2pdf from "html2pdf.js";
@@ -7,13 +8,24 @@ import { LineChart, Line, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tool
 
 export default function CirculationTracker() {
     const [transactions, setTransactions] = useState([]);
+    const [settings, setSettings] = useState(null);
     const [search, setSearch] = useState("");
     const [filter, setFilter] = useState("All"); // All, Overdue, Returned
     const reportRef = useRef(null);
 
     useEffect(() => {
         loadTransactions();
+        loadSettings();
     }, []);
+
+    const loadSettings = async () => {
+        try {
+            const res = await getSettings();
+            if (res.data) setSettings(res.data);
+        } catch (error) {
+            console.error("Failed to load settings:", error);
+        }
+    };
 
     const loadTransactions = async () => {
         try {
@@ -32,7 +44,8 @@ export default function CirculationTracker() {
                 const tx = transactions.find(t => t._id === id);
                 if (tx) {
                     const daysLate = Math.floor((new Date() - new Date(tx.dueDate)) / (1000 * 60 * 60 * 24));
-                    fine = daysLate > 0 ? daysLate * 0.50 : 0;
+                    const dailyFine = settings ? settings.dailyFine : 0.50;
+                    fine = daysLate > 0 ? daysLate * dailyFine : 0;
                 }
             }
             await returnBook(id, fine);
@@ -352,8 +365,13 @@ export default function CirculationTracker() {
                                     currentFine = tx.fine || 0;
                                 } else if (statusName === "Overdue") {
                                     const daysLate = Math.floor((new Date() - new Date(tx.dueDate)) / (1000 * 60 * 60 * 24));
-                                    currentFine = daysLate > 0 ? daysLate * 0.50 : 0;
+                                    const dailyFine = settings ? settings.dailyFine : 0.50;
+                                    const maxFine = settings ? settings.maxFine : 25;
+                                    const calcFine = daysLate > 0 ? daysLate * dailyFine : 0;
+                                    currentFine = Math.min(calcFine, maxFine);
                                 }
+                                
+                                const currencySymbol = settings?.currency === 'USD' ? '$' : settings?.currency === 'EUR' ? '€' : settings?.currency === 'GBP' ? '£' : 'Rs.';
 
                                 return (
                                 <tr key={tx._id} style={{ borderBottom: '1px solid #f8fafc' }}>
@@ -384,7 +402,7 @@ export default function CirculationTracker() {
                                     </td>
 
                                     <td style={{ padding: '1rem 0.5rem', fontSize: '0.875rem', fontWeight: 600, color: currentFine > 0 ? '#ef4444' : '#94a3b8' }}>
-                                        {currentFine > 0 ? `Rs. ${currentFine.toFixed(2)}` : "-"}
+                                        {currentFine > 0 ? `${currencySymbol} ${currentFine.toFixed(2)}` : "-"}
                                     </td>
 
                                     <td style={{ padding: '1rem 0.5rem' }}>
