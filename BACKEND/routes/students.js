@@ -17,12 +17,18 @@ router.route("/").get((req, res) => {
 router.route("/").post((req, res) => {
     const { name, class: className, admissionNumber, address, phone } = req.body;
 
+    // Auto-generate required authentication fields since Admins don't input them here
+    const email = `${admissionNumber.toLowerCase().replace(/[^a-z0-9]/g, '')}@student.bookflow.com`;
+    const password = admissionNumber; // Default password is the admission number
+
     const newStudent = new Student({
         name,
         class: className,
         admissionNumber,
         address,
-        phone
+        phone,
+        email,
+        password
     });
 
     newStudent.save()
