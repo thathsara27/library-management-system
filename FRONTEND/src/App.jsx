@@ -22,6 +22,7 @@ import EditTransaction from "./pages/circulation/EditTransaction.jsx";
 
 import Analytics from "./pages/analytics/Analytics.jsx";
 import Settings from "./pages/settings/Settings.jsx";
+import AdminProfile from "./pages/profile/AdminProfile.jsx";
 
 import Login from "./pages/auth/Login.jsx";
 import Signup from "./pages/auth/Signup.jsx";
@@ -32,6 +33,7 @@ import Layout from "./components/Layout.jsx";
 import StudentLayout from "./components/StudentLayout.jsx";
 import StudentDashboard from "./pages/student/StudentDashboard.jsx";
 import StudentBookDetail from "./pages/student/StudentBookDetail.jsx";
+import StudentAccount from "./pages/student/StudentAccount.jsx";
 
 export default function App() {
   return (
@@ -76,6 +78,7 @@ export default function App() {
                   {/* Settings & Analytics Routes */}
                   <Route path="/analytics" element={<Analytics />} />
                   <Route path="/settings" element={<Settings />} />
+                  <Route path="/admin/profile" element={<AdminProfile />} />
 
                   {/* Fallback */}
                   <Route path="*" element={<Navigate to="/" replace />} />
@@ -91,6 +94,7 @@ export default function App() {
                    <Routes>
                       <Route path="/home" element={<StudentDashboard />} />
                       <Route path="/book/:id" element={<StudentBookDetail />} />
+                      <Route path="/account" element={<StudentAccount />} />
                       
                       {/* Fallback for student routes */}
                       <Route path="*" element={<Navigate to="/student/home" replace />} />

@@ -9,9 +9,17 @@ export default function SupplierList() {
     const [suppliers, setSuppliers] = useState([]);
     const [search, setSearch] = useState("");
     const [activeCategory, setActiveCategory] = useState("All");
+    const [currentPage, setCurrentPage] = useState(1);
+    const [showFilterModal, setShowFilterModal] = useState(false);
+    const [minRatingFilter, setMinRatingFilter] = useState(0);
+    const itemsPerPage = 7;
     const reportRef = useRef(null);
 
     const categories = ["All", "Academic", "Fiction", "Journals", "Technology"];
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [search, activeCategory]);
 
     useEffect(() => {
         loadSuppliers();
@@ -43,6 +51,23 @@ export default function SupplierList() {
             jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' }
         };
         html2pdf().set(opt).from(element).save();
+    };
+
+    const handleDownloadCSV = () => {
+        const headers = ['Supplier Name', 'Category', 'Contact Person', 'Email', 'Phone', 'Supplied Count', 'Rating'];
+        const csvRows = filteredSuppliers.map(s => 
+            `"${s.supplierName}","${s.category}","${s.contactPerson}","${s.email}","${s.phone}","${s.suppliedCount}","${s.rating || 5}"`
+        );
+        const csvContent = [headers.join(','), ...csvRows].join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'suppliers.csv';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
     };
 
     const catCounts = {};
@@ -79,8 +104,12 @@ export default function SupplierList() {
                               s.contactPerson.toLowerCase().includes(search.toLowerCase()) || 
                               s.email.toLowerCase().includes(search.toLowerCase());
         const matchesCategory = activeCategory === "All" || s.category === activeCategory;
-        return matchesSearch && matchesCategory;
+        const matchesRating = (s.rating || 5) >= minRatingFilter;
+        return matchesSearch && matchesCategory && matchesRating;
     });
+
+    const totalPages = Math.ceil(filteredSuppliers.length / itemsPerPage);
+    const currentSuppliers = filteredSuppliers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
     const renderStars = (rating) => {
         const stars = [];
@@ -304,10 +333,10 @@ export default function SupplierList() {
                             ))}
                         </div>
                         <div style={{ width: '1px', height: '24px', backgroundColor: '#e5e7eb', margin: '0 0.5rem' }}></div>
-                        <button style={{ padding: '0.5rem', color: 'var(--color-text-muted)', backgroundColor: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
-                            <Filter size={18} />
+                        <button onClick={() => setShowFilterModal(true)} style={{ padding: '0.5rem', color: 'var(--color-text-muted)', backgroundColor: minRatingFilter > 0 ? '#e0e7ff' : '#f9fafb', borderRadius: '8px', border: minRatingFilter > 0 ? '1px solid #c7d2fe' : '1px solid #e5e7eb', cursor: 'pointer' }}>
+                            <Filter size={18} color={minRatingFilter > 0 ? '#4f46e5' : 'var(--color-text-muted)'} />
                         </button>
-                        <button style={{ padding: '0.5rem', color: 'var(--color-text-muted)', backgroundColor: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+                        <button onClick={handleDownloadCSV} style={{ padding: '0.5rem', color: 'var(--color-text-muted)', backgroundColor: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb', cursor: 'pointer' }}>
                             <Download size={18} />
                         </button>
                     </div>
@@ -327,7 +356,7 @@ export default function SupplierList() {
                             </tr>
                         </thead>
                         <tbody>
-                            {filteredSuppliers.map((s) => (
+                            {currentSuppliers.map((s) => (
                                 <tr key={s._id} style={{ borderTop: '1px solid #f3f4f6', transition: 'background-color 0.2s' }} className="table-row-hover">
                                     <td style={{ padding: '1rem 1.5rem' }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -357,7 +386,7 @@ export default function SupplierList() {
                                     </td>
                                     <td data-html2canvas-ignore="true" style={{ padding: '1rem 1.5rem', textAlign: 'right' }}>
                                         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
-                                            <button style={{ padding: '0.5rem', color: '#9ca3af', backgroundColor: 'transparent', borderRadius: '6px', border: 'none', cursor: 'pointer' }}>
+                                            <button onClick={() => { setActiveCategory(s.category); setSearch(''); }} style={{ padding: '0.5rem', color: '#9ca3af', backgroundColor: 'transparent', borderRadius: '6px', border: 'none', cursor: 'pointer' }} title="Filter by this category">
                                                 <Filter size={18} />
                                             </button>
                                             <Link to={`/suppliers/edit/${s._id}`} style={{ padding: '0.5rem', color: '#9ca3af', backgroundColor: 'transparent', borderRadius: '6px', border: 'none', cursor: 'pointer' }}>
@@ -384,16 +413,58 @@ export default function SupplierList() {
                 {/* Footer Pagination */}
                 <div style={{ padding: '1.25rem 1.5rem', borderTop: '1px solid #f3f4f6', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
-                        Showing <strong style={{color: 'var(--color-text-main)'}}>{filteredSuppliers.length > 0 ? 1 : 0}</strong> to <strong style={{color: 'var(--color-text-main)'}}>{filteredSuppliers.length}</strong> of <strong style={{color: 'var(--color-text-main)'}}>{suppliers.length}</strong> results
+                        Showing <strong style={{color: 'var(--color-text-main)'}}>{filteredSuppliers.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0}</strong> to <strong style={{color: 'var(--color-text-main)'}}>{Math.min(currentPage * itemsPerPage, filteredSuppliers.length)}</strong> of <strong style={{color: 'var(--color-text-main)'}}>{filteredSuppliers.length}</strong> results
                     </p>
                     <div style={{ display: 'flex', gap: '0.25rem' }}>
-                        <button style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', color: 'var(--color-text-muted)', backgroundColor: 'transparent', border: 'none', cursor: 'pointer' }}>Previous</button>
-                        <button style={{ width: '32px', height: '32px', borderRadius: '6px', backgroundColor: 'var(--color-primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', fontSize: '0.875rem', fontWeight: 600 }}>1</button>
-                        <button style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', color: 'var(--color-text-muted)', backgroundColor: 'transparent', border: 'none', cursor: 'pointer' }}>Next</button>
+                        <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1 || totalPages === 0} style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', color: (currentPage === 1 || totalPages === 0) ? '#d1d5db' : 'var(--color-text-muted)', backgroundColor: 'transparent', border: 'none', cursor: (currentPage === 1 || totalPages === 0) ? 'not-allowed' : 'pointer' }}>Previous</button>
+                        
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                            <button key={page} onClick={() => setCurrentPage(page)} style={{ width: '32px', height: '32px', borderRadius: '6px', backgroundColor: currentPage === page ? 'var(--color-primary)' : 'transparent', color: currentPage === page ? 'white' : 'var(--color-text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer' }}>{page}</button>
+                        ))}
+
+                        <button onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages || totalPages === 0} style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', color: (currentPage === totalPages || totalPages === 0) ? '#d1d5db' : 'var(--color-text-muted)', backgroundColor: 'transparent', border: 'none', cursor: (currentPage === totalPages || totalPages === 0) ? 'not-allowed' : 'pointer' }}>Next</button>
                     </div>
                 </div>
 
             </div>
+            {/* Filter Modal */}
+            {showFilterModal && (
+                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+                    <div style={{ backgroundColor: 'white', borderRadius: '1rem', width: '100%', maxWidth: '400px', padding: '2rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}>
+                        <h2 style={{ margin: '0 0 1.5rem 0', fontSize: '1.25rem', color: '#0f172a' }}>Advanced Filters</h2>
+                        
+                        <div style={{ marginBottom: '1.5rem' }}>
+                            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#475569', marginBottom: '0.5rem' }}>Minimum Rating</label>
+                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                {[1, 2, 3, 4, 5].map(rating => (
+                                    <button
+                                        key={rating}
+                                        onClick={() => setMinRatingFilter(rating === minRatingFilter ? 0 : rating)}
+                                        style={{
+                                            padding: '0.5rem 1rem',
+                                            borderRadius: '0.5rem',
+                                            border: minRatingFilter === rating ? '1px solid #06b6d4' : '1px solid #e2e8f0',
+                                            backgroundColor: minRatingFilter === rating ? '#ecfeff' : 'white',
+                                            color: minRatingFilter === rating ? '#06b6d4' : '#64748b',
+                                            cursor: 'pointer',
+                                            fontWeight: 600,
+                                            flex: 1
+                                        }}
+                                    >
+                                        {rating}+
+                                    </button>
+                                ))}
+                            </div>
+                            <p style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.5rem' }}>Click a rating again to clear.</p>
+                        </div>
+                        
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
+                            <button onClick={() => { setMinRatingFilter(0); setShowFilterModal(false); }} style={{ padding: '0.5rem 1.5rem', borderRadius: '0.5rem', border: '1px solid #e2e8f0', backgroundColor: 'white', color: '#64748b', fontWeight: 600, cursor: 'pointer' }}>Clear</button>
+                            <button onClick={() => setShowFilterModal(false)} style={{ padding: '0.5rem 1.5rem', borderRadius: '0.5rem', border: 'none', backgroundColor: '#06b6d4', color: 'white', fontWeight: 600, cursor: 'pointer' }}>Apply Filters</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
