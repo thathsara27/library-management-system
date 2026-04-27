@@ -338,14 +338,14 @@ export default function StudentList() {
                                 return (
                                 <tr key={m._id} style={{ borderTop: '1px solid #f3f4f6', transition: 'background-color 0.2s' }} className="table-row-hover">
                                     <td style={{ padding: '1rem 1.5rem' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                        <Link to={`/students/edit/${m._id}`} style={{ display: 'flex', alignItems: 'center', gap: '1rem', textDecoration: 'none' }}>
                                             <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: styleColors.bg, color: styleColors.text, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '0.875rem' }}>
                                                 {getInitials(m.name)}
                                             </div>
                                             <div>
-                                                <p style={{ fontWeight: 600, color: 'var(--color-text-main)' }}>{m.name}</p>
+                                                <p style={{ margin: 0, fontWeight: 600, color: 'var(--color-text-main)' }}>{m.name}</p>
                                             </div>
-                                        </div>
+                                        </Link>
                                     </td>
                                     <td style={{ padding: '1rem 1.5rem' }}>
                                         <span style={{ backgroundColor: '#f1f5f9', color: '#475569', padding: '0.25rem 0.75rem', borderRadius: '6px', fontSize: '0.875rem', fontWeight: 600, fontFamily: 'monospace' }}>

@@ -36,6 +36,9 @@ app.use("/api/dashboard", dashboardRouter);
 const settingsRouter = require("./routes/settings.js");
 app.use("/api/settings", settingsRouter);
 
+const auditLogRouter = require("./routes/auditLogs.js");
+app.use("/api/auditLogs", auditLogRouter);
+
 const URL = process.env.MONGODB_URL;
 
 mongoose.connect(URL)

@@ -9,6 +9,7 @@ export default function TopBar() {
     const [results, setResults] = useState([]);
     const [isOpen, setIsOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [showNotifications, setShowNotifications] = useState(false);
     const navigate = useNavigate();
     const dropdownRef = useRef(null);
 
@@ -17,6 +18,9 @@ export default function TopBar() {
         function handleClickOutside(event) {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
                 setIsOpen(false);
+            }
+            if (event.target.closest('#notification-bell-container') === null) {
+                setShowNotifications(false);
             }
         }
         document.addEventListener("mousedown", handleClickOutside);
@@ -201,8 +205,8 @@ export default function TopBar() {
                 )}
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <button style={{
+            <div id="notification-bell-container" style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                <button onClick={() => setShowNotifications(!showNotifications)} style={{
                     padding: '0.5rem',
                     borderRadius: '50%',
                     backgroundColor: 'white',
@@ -214,7 +218,51 @@ export default function TopBar() {
                     cursor: 'pointer'
                 }}>
                     <Bell size={20} color="var(--color-text-muted)" />
+                    <span style={{ position: 'absolute', top: '0', right: '0', width: '8px', height: '8px', backgroundColor: '#ef4444', borderRadius: '50%', border: '2px solid white' }}></span>
                 </button>
+                
+                {showNotifications && (
+                    <div style={{
+                        position: 'absolute',
+                        top: '120%',
+                        right: 0,
+                        width: '320px',
+                        backgroundColor: 'white',
+                        borderRadius: '1rem',
+                        boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
+                        zIndex: 100,
+                        overflow: 'hidden',
+                        border: '1px solid #f1f5f9'
+                    }}>
+                        <div style={{ padding: '1rem', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <h4 style={{ margin: 0, fontSize: '0.875rem', fontWeight: 600, color: '#0f172a' }}>Notifications</h4>
+                            <span style={{ fontSize: '0.75rem', color: '#06b6d4', cursor: 'pointer', fontWeight: 500 }}>Mark all as read</span>
+                        </div>
+                        <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                            {/* Mock Notification 1 */}
+                            <div style={{ padding: '1rem', borderBottom: '1px solid #f1f5f9', display: 'flex', gap: '1rem', alignItems: 'flex-start', cursor: 'pointer', backgroundColor: '#f8fafc' }}>
+                                <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#06b6d4', marginTop: '6px', flexShrink: 0 }}></div>
+                                <div>
+                                    <p style={{ margin: '0 0 0.25rem 0', fontSize: '0.875rem', color: '#0f172a', fontWeight: 500 }}>New Books Added</p>
+                                    <p style={{ margin: 0, fontSize: '0.75rem', color: '#64748b' }}>5 new books have been added to the Science & Technology section.</p>
+                                    <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.65rem', color: '#94a3b8' }}>2 hours ago</p>
+                                </div>
+                            </div>
+                            {/* Mock Notification 2 */}
+                            <div style={{ padding: '1rem', borderBottom: '1px solid #f1f5f9', display: 'flex', gap: '1rem', alignItems: 'flex-start', cursor: 'pointer' }}>
+                                <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'transparent', marginTop: '6px', flexShrink: 0 }}></div>
+                                <div>
+                                    <p style={{ margin: '0 0 0.25rem 0', fontSize: '0.875rem', color: '#0f172a', fontWeight: 500 }}>System Maintenance</p>
+                                    <p style={{ margin: 0, fontSize: '0.75rem', color: '#64748b' }}>Scheduled maintenance will occur tonight at 2:00 AM.</p>
+                                    <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.65rem', color: '#94a3b8' }}>Yesterday</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div style={{ padding: '0.75rem', textAlign: 'center', backgroundColor: '#f8fafc', borderTop: '1px solid #f1f5f9', cursor: 'pointer' }}>
+                            <p style={{ margin: 0, fontSize: '0.75rem', color: '#64748b', fontWeight: 500 }}>View All Notifications</p>
+                        </div>
+                    </div>
+                )}
             </div>
         </header>
     );
